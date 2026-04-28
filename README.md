@@ -28,8 +28,6 @@ Este dataset contém dados operacionais, financeiros e estruturais do sistema de
 
 ---
 
-Aqui está a seção revisada com os links incorporados de forma adequada e mantendo a formatação formal:
-
 ---
 
 ### Fontes Complementares (Hackathon)
