@@ -1,1 +1,3 @@
-dados-analytica-hackathon/
+dados/
+venv/
+.ipynb_checkpoints/
