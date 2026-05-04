@@ -4,7 +4,7 @@ Projeto realizado para o processo seletivo da equipe Analytica no primeiro semes
 
 ## Organização do projeto
 
-Na pasta [material/](material/) encontram-se os materiais já providos pela equipe da Analytica, para consulta.
+Na pasta [materiais/](materiais/) encontram-se os materiais já providos pela equipe da Analytica, para consulta.
 
 Ao realizar o download da pasta dados-analytica-hackathon/ pelo [Drive](https://drive.google.com/drive/folders/1h9cDrlc3Y-eUHJsikezlWNYYBTkDD9Um?usp=sharing), encontram-se todos os datasets usados no projeto. Segue abaixo uma breve descrição dos conteúdos da pasta e a fonte de cada um deles:
 
