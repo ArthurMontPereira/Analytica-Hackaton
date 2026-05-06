@@ -1,0 +1,163 @@
+import pandas as pd
+import zipfile
+import gdown
+import os
+
+id_da_pasta = '1h9cDrlc3Y-eUHJsikezlWNYYBTkDD9Um'
+pasta_final = '../dados'
+
+if not os.path.exists(pasta_final):
+    os.makedirs(pasta_final, exist_ok=True)
+    
+    print("Iniciando download dos datasets para a pasta dados... Aguarde")
+    
+    gdown.download_folder(id=id_da_pasta, output=pasta_final, quiet=True, use_cookies=False)
+    
+    print("Download concluido")
+else:
+    print("A pasta 'dados' já existe.")
+
+df_raw= pd.read_csv('../dados/dados-analytica-hackathon/lotacao_onibus_formatado.csv')
+
+df_raw['servico'] =df_raw['servico'].astype(str) #servico (linha) está como número mas é pra ser interpretado como string
+
+lot=df_raw[(df_raw['servico'] !='795') & (~df_raw['servico'].str.contains('LECD'))]
+
+lot['data']=pd.to_datetime(lot['data'],format='%d/%m/%Y') #coloca a coluna data com valor de data no formato certo
+
+sum_=pd.read_csv('../dados/dados-analytica-hackathon/dashboard_subsidio_sppo/sumario_servico_dia_tipo.csv')
+sum_['data']=pd.to_datetime(sum_['data'],format='%Y-%m-%d')
+
+mb = pd.read_csv('../dados/dados-analytica-hackathon/matriz_linha_bairro_corrigida.csv') # colunas: 'bairro' e 'linha'
+mb['linha']=mb['linha'].astype(str)
+
+PERIODO=f"{sum_['data'].min().date()} a {sum_['data'].max().date()}"
+
+lot = lot[lot['class_servico'] != 'Rodoviário'] #remove do lotação onibus rodoviários
+
+# limpar o sumário
+sum_=sum_[sum_['km_planejada']>0] #linha não era pra operar no dia
+sum_=sum_[['servico','data','perc_km_planejada']] #só precisa dessas 3 colunas
+
+df=lot.merge(sum_,on=['servico', 'data'],how='inner') #merge de lotacao e sumario onde servico e data iguais em ambos
+
+# Classificar região
+zona_oeste = [
+    'Campo Grande','Santa Cruz','Bangu','Realengo','Padre Miguel',
+    'Sepetiba','Guaratiba','Paciência','Santíssimo','Inhoaíba',
+    'Cosmos','Pedra de Guaratiba','Ilha de Guaratiba','Jabour',
+    'Jardim América','Magalhães Bastos','Senador Camará',
+    'Senador Vasconcelos','Vila Kennedy','Deodoro','Campo dos Afonsos',
+    'Vila Militar','Anchieta','Recreio dos Bandeirantes',
+    'Barra da Tijuca','Barra de Guaratiba','Barra Olímpica',
+    'Vargem Grande','Vargem Pequena','Camorim','Curicica',
+    'Gardênia Azul','Itanhangá','Jacarepaguá','Pechincha',
+    'Praça Seca','Taquara','Tanque','Anil','Cidade de Deus',
+    'Jardim Sulacap','Vila Valqueire','Freguesia (Jacarepaguá)',
+    'Cidade Universitária'
+]
+zona_norte = [
+    'Madureira','Cascadura','Irajá','Pavuna','Marechal Hermes',
+    'Méier','Engenho de Dentro','Engenho da Rainha','Engenho Novo',
+    'Bonsucesso','Ramos','Olaria','Penha','Cordovil','Guadalupe',
+    'Rocha Miranda','Honório Gurgel','Coelho Neto','Bento Ribeiro',
+    'Del Castilho','Inhaúma','Acari','Água Santa',
+    'Grajaú','Vila Isabel','Andaraí','Tijuca','Alto da Boa Vista',
+    'Cachambi','Campinho','Encantado','Lins de Vasconcelos','Pilares',
+    'Piedade','Quintino Bocaiúva','Riachuelo','Rocha','Sampaio',
+    'Todos os Santos','Tomás Coelho','Turiaçu','Osvaldo Cruz',
+    'Barros Filho','Colégio','Costa Barros','Engenheiro Leal',
+    'Higienópolis','Parque Colúmbia','Parada de Lucas',
+    'Ricardo de Albuquerque','Vaz Lobo','Vicente de Carvalho',
+    'Vila da Penha','Vista Alegre','Vigário Geral',
+    'Complexo do Alemão','Jacarezinho','Manguinhos','Benfica',
+    'Caju','Mangueira','Maracanã','São Francisco Xavier',
+    'Jacaré','Brás de Pina','Cavalcanti','Penha Circular',
+    'Vasco da Gama','Maria da Graça','Bancários','Cacuia','Cocotá',
+    'Galeão','Jardim Carioca','Jardim Guanabara','Moneró',
+    'Pitangueiras','Portuguesa','Praia da Bandeira','Ribeira',
+    'Tauá','Zumbi','Maré','Abolição'
+]
+zona_sul = [
+    'Ipanema','Leblon','Botafogo','Copacabana','Gávea','Lagoa',
+    'Leme','Flamengo','Cosme Velho','Humaitá','São Conrado',
+    'Jardim Botânico','Rocinha','Vidigal','Urca','Laranjeiras',
+    'Catete','Glória','Santa Teresa','Joá'
+]
+centro = [
+    'Centro','Cidade Nova','Santo Cristo','Gamboa','Saúde',
+    'Rio Comprido','Imperial de São Cristóvão','Praça da Bandeira',
+    'Catumbi','Estácio','Lapa'
+]
+
+
+def classificar_regiao(bairro):
+    if bairro in zona_sul: return 'Zona Sul'
+    if bairro in centro: return 'Centro'
+    if bairro in zona_norte: return 'Zona Norte / Subúrbio'
+    if bairro in zona_oeste: return 'Zona Oeste'
+    return 'Não identificado'
+
+# Classificar todos os bairros da matriz_linha, adiciona uma nova coluna regiao
+mb['regiao'] = mb['bairro'].apply(classificar_regiao)
+
+# Para cada linha, pegar a região mais frequente entre todos os bairros dela
+regiao_por_linha = (
+    mb[mb['regiao'] != 'Não identificado']
+    .groupby('linha')['regiao']
+    .agg(lambda x: x.value_counts().index[0])
+    .reset_index()
+    .rename(columns={'linha': 'servico'}) # renomear só aqui para o merge
+)
+
+df['servico']=df['servico'].astype(str) #colocar a linha do onibus como string
+regiao_por_linha['servico']=regiao_por_linha['servico'].astype(str)
+df=df.merge(regiao_por_linha, on='servico', how='left') #merge left, encaixa o regiao por linha no df mesmo se não tiver correspondente no região por linha
+df['regiao'] = df['regiao'].fillna('Não identificado') #preenche os nan com nao identificado
+
+
+df['mes'] = df['data'].dt.to_period('M') #cria nova coluna mês, que só pega o ano e o mês da data (2023-07-25 → 2023-07)
+#agrupa pelos os que tem o msm servico(linha), mes e regiao
+#agg(coluna=('colunax','método') cria colunas novas usando colunas do df mensal agrupado e fazendo alguma operação, unique conta valores unicos, mean média, sum soma tudo)
+df_mensal = df.groupby(['servico', 'mes', 'regiao']).agg(
+    passageiros_total=('qtd_passageiros_total', 'sum'),
+    viagens_total=('qtd_viagens', 'sum'),
+    cumprimento=('perc_km_planejada', 'mean')).reset_index()
+df_mensal['passageiros_por_viagem']=(df_mensal['passageiros_total']/df_mensal['viagens_total'].replace(0, None)) #adiciona essa coluna passageiros por viagens usando a coluna do df viagens total que acabou de ser criada
+
+# limpeza simples onde tira outliers absurdos
+df_mensal = df_mensal[df_mensal['passageiros_por_viagem'] <= 90]
+
+# cria a análise por região aqui. df_mensal.groupby('regiao') junta todas as linhas da mesma região
+por_regiao = df_mensal.groupby('regiao').agg(
+    linhas=('servico','nunique'),
+    passageiros_por_viagem=('passageiros_por_viagem','mean'),
+    cumprimento=('cumprimento', 'mean'),
+    total_passageiros=('passageiros_total','sum')
+).round(1).sort_values('cumprimento').reset_index() #tinha transformado regiao em indice, reset index volta o regiao como coluna
+
+por_regiao.insert(0, 'periodo', PERIODO) #coloca o periodo na coluna 0 (no começo)
+
+#mesma coisa de antes
+ranking = df_mensal.groupby(['servico','regiao']).agg(
+    meses=('mes','nunique'),
+    cumprimento_medio=('cumprimento','mean'),
+    passageiros_por_viagem=('passageiros_por_viagem','mean'),
+    total_passageiros=('passageiros_total','sum')
+).reset_index()
+ranking=ranking[ranking['meses'] >= 10] #amostra de 10 meses pra cima
+ranking =ranking.sort_values('cumprimento_medio').head(20).reset_index(drop=True) #só mostra os 20 primeiros
+ranking.index+= 1
+ranking.insert(0, 'periodo', PERIODO)
+ranking =ranking.round(1)
+
+
+#parte que salva os arquivos e te dá compactado
+por_regiao.to_csv('analise_por_regiao.csv', index=False)
+df_mensal.to_csv('dataset_completo.csv', index=False)
+ranking.to_csv('ranking_piores_linhas.csv', index=True, index_label='posicao')
+
+with zipfile.ZipFile('arquivos.zip', 'w') as z:
+    z.write('analise_por_regiao.csv')
+    z.write('dataset_completo.csv')
+    z.write('ranking_piores_linhas.csv')
