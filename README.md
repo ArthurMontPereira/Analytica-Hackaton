@@ -10,7 +10,7 @@ Na pasta do Google Drive [dados-analytica-hackathon/](https://drive.google.com/d
 
 - limite_de_bairros_rj.csv: limites de cada bairro da cidade do Rio de Janeiro, retirado do data.rio;
 - ids_por_bairro_rj.csv: Índice de Desenvolvimento Social de cada bairro da cidade do Rio de Janeiro, retirado do data.rio;
-- lotacao_onibus.csv: a preencher;
+- lotacao_onibus.csv: Volume diário de passageiros, frota e viagens detalhado por linha (jun/2022 a ago/2024);
 - matriz_linha_bairro: relação entre bairros e linhas;
 - dashboard_subsidio_sppo: pasta com tabelas consolidadas utilizadas para acompanhamento financeiro, fonte: SMTR;
 - gtfs: pasta com base padronizada de transporte contendo linhas, paradas, viagens, geometria das rotas e operação temporal, fonte: SMTR;
