@@ -10,9 +10,9 @@ Na pasta do Google Drive [dados-analytica-hackathon/](https://drive.google.com/d
 
 - limite_de_bairros_rj.csv: limites de cada bairro da cidade do Rio de Janeiro, retirado do data.rio;
 - ids_por_bairro_rj.csv: Índice de Desenvolvimento Social de cada bairro da cidade do Rio de Janeiro, retirado do data.rio;
-- lotacao_onibus_formatado_final.csv: a preencher;
+- lotacao_onibus.csv: volume diário de passageiros, frota e viagens detalhado por linha (jun/2022 a ago/2024);
 - dashboard_subsidio_sppo: pasta com tabelas consolidadas utilizadas para acompanhamento financeiro, fonte: SMTR;
-- gtfs: pasta com base padronizada de transporte contendo linhas, paradas, viagens, geometria das rotas e operação temporal, fonte: SMTR;
+- gtfs: pasta com base padronizada de transporte contendo linhas, paradas e viagens, fonte: SMTR;
 
 ## Rodando o projeto
 
@@ -47,4 +47,7 @@ Rode o Jupyter Notebook na sua máquina:
 ```bash
 jupyter notebook
 ```
-Siga as instruções e realize a EDA presente em *notebooks/eda.ipynb*.
+Siga as instruções e execute os arquivos presentes na pasta *notebooks/*, na ordem em que estão dispostos:
+- 00_download.ipynb: realiza o download dos datasets a partir do Google Drive em uma pasta *dados/*
+- 01_tratamento.ipynb: trata os dados usando a biblioteca Pandas e armazena em uma nova pasta *dados_tratados/*
+- 02_eda.ipynb: utiliza os dados tratados para realizar uma análise exploratória de dados.
