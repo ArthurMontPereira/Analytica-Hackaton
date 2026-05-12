@@ -51,3 +51,9 @@ Siga as instruções e execute os arquivos presentes na pasta *notebooks/*, na o
 - 00_download.ipynb: realiza o download dos datasets a partir do Google Drive em uma pasta *dados/*
 - 01_tratamento.ipynb: trata os dados usando a biblioteca Pandas e armazena em uma nova pasta *dados_tratados/*
 - 02_eda.ipynb: utiliza os dados tratados para realizar uma análise exploratória de dados.
+
+
+## Grupo
+- Arthur Monteiro C. Pereira
+- João Rodrigo D. Costa
+- Luiz Antônio F. Conti
